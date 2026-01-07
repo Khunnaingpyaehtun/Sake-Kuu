@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>စိတ်ကူး | Seik Kuu - Full Interactive STEM Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pyidaungsu:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Design Tokens -->
+    <style>
+        :root {
+            --primary-cyan: #22d3ee;
+            --primary-orange: #fb923c;
+            --bg-dark: #020617;
+            --bg-darker: #0f172a;
+            --glass-bg: rgba(15, 23, 42, 0.85);
+        }
+
+        body { 
+            font-family: 'Pyidaungsu', sans-serif; 
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at 50% 50%, var(--bg-darker) 0%, var(--bg-dark) 100%);
+            color: #f1f5f9; 
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+
+        /* Background Pattern */
+        .circuit-pattern {
+            background-image: radial-gradient(rgba(34, 211, 238, 0.08) 1.5px, transparent 1.5px),
+                              linear-gradient(to right, rgba(30, 41, 59, 0.3) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(30, 41, 59, 0.3) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+        
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        @keyframes orbit {
+            from { transform: rotate(0deg) translateX(var(--orbit-dist, 80px)) rotate(0deg); }
+            to { transform: rotate(360deg) translateX(var(--orbit-dist, 80px)) rotate(-360deg); }
+        }
+        @keyframes orbit-reverse {
+            from { transform: rotate(360deg) translateX(var(--orbit-dist-outer, 120px)) rotate(-360deg); }
+            to { transform: rotate(0deg) translateX(var(--orbit-dist-outer, 120px)) rotate(0deg); }
+        }
+
+        .floating { animation: float 6s ease-in-out infinite; }
+        .orbiting { 
+            --orbit-dist: 60px;
+            animation: orbit 14s linear infinite; 
+        }
+        .orbiting-reverse { 
+            --orbit-dist-outer: 100px;
+            animation: orbit-reverse 20s linear infinite; 
+        }
+
+        @media (min-width: 768px) {
+            .orbiting { --orbit-dist: 90px; }
+            .orbiting-reverse { --orbit-dist-outer: 140px; }
+        }
+
+        .tech-gradient {
+            background: linear-gradient(135deg, var(--primary-cyan) 0%, var(--primary-orange) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .loader {
+            border: 3px solid rgba(34, 211, 238, 0.1);
+            border-top: 3px solid var(--primary-cyan);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        .showcase-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.95);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .showcase-overlay.active { display: flex; }
+
+        /* Structured Results Look */
+        .result-card {
+            background: rgba(30, 41, 59, 0.4);
+            border-left: 3px solid var(--primary-orange);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.75rem;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="circuit-pattern selection:bg-cyan-500/30">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 glass-panel border-b border-white/10">
+        <div class="container mx-auto px-4 sm:px-6 py-3 md:py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 md:w-11 md:h-11 bg-cyan-600 rounded-xl flex items-center justify-center font-bold text-white text-lg md:text-xl shadow-lg">စ</div>
+                <div class="flex flex-col">
+                    <span class="text-lg md:text-xl font-black tracking-tighter text-white uppercase leading-none" data-key="nav-brand">စိတ်ကူး</span>
+                    <span class="text-[8px] md:text-[10px] uppercase text-cyan-400 font-bold tracking-widest mt-1">Innovation Lab</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 md:gap-8">
+                <div class="hidden lg:flex items-center gap-8 text-[11px] font-black text-slate-300 tracking-widest uppercase">
+                    <a href="#about" class="hover:text-cyan-400 transition" data-key="nav-history">History</a>
+                    <a href="#showcase" class="hover:text-cyan-400 transition" data-key="nav-showcase">Showcase</a>
+                    <a href="#ai-lab" class="text-orange-400" data-key="nav-ai">AI Mentor</a>
+                    <a href="#contact" class="hover:text-cyan-400 transition" data-key="nav-contact">Contact</a>
+                </div>
+                <div class="flex bg-slate-900/50 rounded-lg p-1 border border-white/10 text-[10px] font-bold">
+                    <button onclick="changeLang('my')" id="btn-lang-my" class="px-2 py-1 rounded transition-colors bg-cyan-600 text-white">MM</button>
+                    <button onclick="changeLang('en')" id="btn-lang-en" class="px-2 py-1 rounded transition-colors text-slate-400">EN</button>
+                </div>
+                <a href="#join-us" class="bg-cyan-500 hover:bg-cyan-400 text-white px-4 md:px-7 py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black transition-all shadow-lg uppercase tracking-tight" data-key="nav-join">JOIN US</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-[85vh] flex items-center pt-10 px-4 md:px-6 relative overflow-hidden">
+        <div class="container mx-auto grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div class="space-y-6 md:space-y-10 text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-black tracking-widest uppercase mx-auto lg:mx-0 shadow-lg">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span data-key="hero-badge">Developing Myanmar Future Since 2018</span>
+                </div>
+                <h1 class="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-tight text-white tracking-tighter">
+                    <span data-key="hero-h1-1">ဗုံးခိုကျင်းထဲမှ</span> <br>
+                    <span class="tech-gradient" data-key="hero-h1-2">အနာဂတ် နိုဘယ်လ်များ</span>
+                </h1>
+                <p class="text-slate-400 max-w-2xl mx-auto lg:mx-0 text-base md:text-xl lg:text-2xl leading-relaxed font-medium" data-key="hero-p">
+                    စစ်ဘေးရှောင်ကလေးငယ်များနှင့် နယ်စပ်ဒေသမှ လူငယ်များအတွက် STEM နှင့် Robotics ပညာရေးကို အဆင့်မြင့် နည်းပညာများဖြင့် ပေါင်းကူးပေးမည့် ပလက်ဖောင်း။
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 md:gap-6 pt-4">
+                    <a href="#ai-lab" class="bg-orange-500 text-slate-950 font-black px-8 md:px-12 py-4 md:py-5 rounded-2xl shadow-xl hover:bg-orange-400 transition transform hover:-translate-y-1 text-sm md:text-base uppercase tracking-wider" data-key="btn-ai-mentor">✨ AI MENTOR</a>
+                    <a href="#showcase" class="glass-panel text-white font-bold px-8 md:px-12 py-4 md:py-5 rounded-2xl border border-white/20 hover:bg-slate-800 transition transform hover:-translate-y-1 text-sm md:text-base uppercase tracking-wider" data-key="btn-showcase">ဖန်တီးမှုများ</a>
+                </div>
+            </div>
+
+            <!-- Orbit Animation -->
+            <div class="relative flex justify-center items-center h-[350px] sm:h-[450px] lg:h-[550px]">
+                <div class="relative w-64 h-64 sm:w-80 lg:w-96 flex items-center justify-center">
+                    <div class="w-24 h-24 sm:w-32 lg:w-40 bg-cyan-500/20 rounded-[2.5rem] border-2 border-cyan-400 flex items-center justify-center text-6xl sm:text-7xl lg:text-8xl floating z-10 shadow-2xl">
+                        🤖
+                    </div>
+                    <div class="absolute w-10 h-10 sm:w-12 lg:w-14 bg-cyan-400 rounded-xl flex items-center justify-center text-2xl sm:text-3xl text-slate-950 font-bold orbiting">⚙️</div>
+                    <div class="absolute w-10 h-10 sm:w-12 lg:w-14 bg-orange-400 rounded-xl flex items-center justify-center text-2xl sm:text-3xl text-slate-950 font-bold orbiting" style="animation-delay: -7s">⚛️</div>
+                    <div class="absolute w-10 h-10 sm:w-12 lg:w-14 glass-panel rounded-xl flex items-center justify-center text-2xl sm:text-3xl border border-cyan-500 orbiting-reverse">💻</div>
+                    <div class="absolute w-10 h-10 sm:w-12 lg:w-14 glass-panel rounded-xl flex items-center justify-center text-2xl sm:text-3xl border border-orange-500 orbiting-reverse" style="animation-delay: -10s">🔬</div>
+                    <div class="absolute w-full h-full border border-white/5 rounded-full opacity-50"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Project Showcase -->
+    <section id="showcase" class="container mx-auto px-4 md:px-6 py-20 scroll-mt-20">
+        <div class="text-center space-y-4 mb-16">
+            <h2 class="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter" data-key="showcase-h2">Project Showcase</h2>
+            <p class="text-slate-500 max-w-xl mx-auto italic" data-key="showcase-p">ကလေးငယ်များ၏ လက်တွေ့ဖန်တီးမှု မှတ်တိုင်များ</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8" id="showcase-grid"></div>
+    </section>
+
+    <!-- AI Mentor Hub -->
+    <section id="ai-lab" class="container mx-auto px-4 md:px-6 py-16 scroll-mt-20">
+        <div class="glass-panel rounded-[2rem] md:rounded-[4rem] p-6 md:p-12 lg:p-16 border-t-8 border-orange-500 relative overflow-hidden shadow-2xl">
+            <div class="grid lg:grid-cols-5 gap-10 lg:gap-16 items-start relative z-10">
+                
+                <!-- Input Panel -->
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="space-y-4">
+                        <h2 class="text-4xl md:text-5xl font-black text-white leading-tight" data-key="ai-h2">✨ AI Mentor Hub</h2>
+                        <p class="text-slate-300 text-lg md:text-xl font-bold opacity-80" data-key="ai-p">
+                            သင့်မှာရှိတဲ့ ပစ္စည်းတွေနဲ့ ဘာတွေ တီထွင်လို့ရမလဲ? AI ကို မေးကြည့်လိုက်ပါ။
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950/40 p-6 md:p-8 rounded-[2rem] border border-white/10 shadow-xl backdrop-blur-md">
+                        <div class="space-y-6">
+                            <div class="text-left">
+                                <label class="block text-[10px] md:text-xs font-black text-orange-400 uppercase tracking-widest mb-3" data-key="ai-input-label">Command Center</label>
+                                <textarea id="materialsInput" rows="2" placeholder="..." class="w-full bg-slate-900 border-2 border-white/5 rounded-2xl px-6 py-4 text-white text-base md:text-lg focus:outline-none focus:border-orange-500/50 transition-all resize-none shadow-inner"></textarea>
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="setTemplate('cardboard')" class="px-4 py-2 rounded-xl border border-white/5 bg-white/5 text-[10px] font-bold text-slate-400 hover:text-cyan-400 transition-all" data-key="ai-tag-1">#DIYProject</button>
+                                <button onclick="setTemplate('career')" class="px-4 py-2 rounded-xl border border-white/5 bg-white/5 text-[10px] font-bold text-slate-400 hover:border-orange-400 transition-all" data-key="ai-tag-2">#CareerPath</button>
+                            </div>
+
+                            <button onclick="askAIMuse()" id="museBtn" class="w-full bg-orange-600 hover:bg-orange-500 text-slate-950 font-black py-5 rounded-2xl shadow-xl transition-all transform active:scale-95 uppercase tracking-widest text-sm md:text-base">
+                                <span data-key="ai-btn">NEURAL PROCESSING</span> 🚀
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Structured Results Display -->
+                <div class="lg:col-span-3">
+                    <div class="relative bg-slate-950 rounded-[2.5rem] h-[500px] md:h-[650px] border-2 border-white/10 flex flex-col shadow-2xl overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+                            <div class="flex items-center gap-2">
+                                <div class="flex gap-1">
+                                    <div class="w-2 h-2 rounded-full bg-red-500/60 shadow-lg"></div>
+                                    <div class="w-2 h-2 rounded-full bg-yellow-500/60 shadow-lg"></div>
+                                    <div class="w-2 h-2 rounded-full bg-green-500/60 shadow-lg"></div>
+                                </div>
+                                <span class="text-[9px] font-black text-slate-500 tracking-[0.2em] uppercase ml-3">AI_NEURAL_LOG</span>
+                            </div>
+                            <button onclick="clearChat()" class="text-[9px] font-mono text-cyan-400 hover:text-white">Clear Terminal</button>
+                        </div>
+
+                        <div id="aiResponse" class="flex-1 p-6 md:p-10 overflow-y-auto custom-scrollbar relative z-10 text-left">
+                            <div id="conversationArea" class="space-y-6">
+                                <span class="text-orange-500 font-mono opacity-50">&gt; SYSTEM_READY: </span><span class="text-slate-500" data-key="ai-idle">အပေါ်က အကွက်မှာ စာရိုက်ပြီး Neural Processing စတင်လိုက်ပါ...</span>
+                            </div>
+                        </div>
+
+                        <div id="loadingOverlay" class="hidden absolute inset-0 bg-slate-950/95 z-20 flex flex-col items-center justify-center space-y-10">
+                            <div class="loader"></div>
+                            <p class="text-[10px] text-orange-400 tracking-[0.4em] uppercase animate-pulse font-black" data-key="ai-loading">Processing...</p>
+                        </div>
+                        <div class="terminal-overlay absolute inset-0 opacity-[0.05]"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="container mx-auto px-4 md:px-6 py-20 scroll-mt-20">
+        <div class="glass-panel p-8 md:p-16 rounded-[2.5rem] border border-white/10 text-center space-y-12 shadow-2xl relative overflow-hidden">
+            <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-cyan-500/10 rounded-full blur-[100px]"></div>
+            <h2 class="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter" data-key="nav-contact">Contact Us</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="space-y-3 group p-6 rounded-3xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 shadow-lg">
+                    <div class="text-4xl group-hover:scale-110 transition-transform">📧</div>
+                    <p class="text-lg font-bold text-slate-300">Email</p>
+                    <p class="text-cyan-400 font-black text-sm break-all">contact@seikkuu.org</p>
+                </div>
+                <div class="space-y-3 group p-6 rounded-3xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 shadow-lg">
+                    <div class="text-4xl group-hover:scale-110 transition-transform">📱</div>
+                    <p class="text-lg font-bold text-slate-300">Telegram</p>
+                    <p class="text-orange-400 font-black text-sm">@seikkuu_project</p>
+                </div>
+                <div class="space-y-3 group p-6 rounded-3xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 shadow-lg">
+                    <div class="text-4xl group-hover:scale-110 transition-transform">🌐</div>
+                    <p class="text-lg font-bold text-slate-300">Facebook</p>
+                    <p class="text-white font-black text-sm">Seik Kuu Project</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-20 border-t border-white/5 bg-slate-950">
+        <div class="container mx-auto px-4 md:px-6 text-center space-y-10">
+            <div class="flex items-center justify-center gap-4">
+                <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-bold border border-white/10 shadow-lg">စ</div>
+                <span class="font-black text-2xl md:text-4xl tracking-[0.5em] uppercase text-white" data-key="footer-brand">Seik Kuu Project</span>
+            </div>
+            <p class="text-slate-600 text-[10px] uppercase tracking-[0.5em] font-black px-4 leading-loose" data-key="footer-p">Empowering Every Child through Technology & Innovation</p>
+            <div class="text-[8px] text-slate-800 font-black uppercase tracking-widest pt-4">© 2024 - 2026 Seik Kuu Project. All Rights Reserved.</div>
+        </div>
+    </footer>
+
+    <!-- Overlay -->
+    <div id="showcaseOverlay" class="showcase-overlay" onclick="closeShowcase()">
+        <div class="glass-panel max-w-2xl w-full p-8 md:p-12 rounded-[3rem] border border-cyan-500/30 text-center space-y-8" onclick="event.stopPropagation()">
+            <div id="showcaseIcon" class="text-8xl">🚀</div>
+            <h3 id="showcaseTitle" class="text-3xl md:text-5xl font-black text-white uppercase tech-gradient">Title</h3>
+            <p id="showcaseText" class="text-slate-300 text-lg md:text-xl leading-relaxed"></p>
+            <button onclick="closeShowcase()" class="px-10 py-3 bg-white/10 border border-white/20 rounded-2xl text-slate-400 font-bold uppercase tracking-widest hover:bg-red-500/20 hover:text-red-400 transition" data-key="btn-close">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = ""; 
+        const modelName = "gemini-2.5-flash-preview-09-2025";
+        let currentLang = 'my';
+
+        const translations = {
+            my: {
+                "nav-brand": "စိတ်ကူး", "nav-history": "နောက်ခံသမိုင်း", "nav-showcase": "ဖန်တီးမှုများ", "nav-ai": "AI Mentor", "nav-contact": "ဆက်သွယ်ရန်", "nav-join": "JOIN US",
+                "hero-badge": "မြန်မာ့အနာဂတ်ကို ၂၀၁၈ မှစ၍ ပျိုးထောင်ခြင်း", "hero-h1-1": "ဗုံးခိုကျင်းထဲမှ", "hero-h1-2": "အနာဂတ် နိုဘယ်လ်များ",
+                "hero-p": "စစ်ဘေးရှောင်ကလေးငယ်များနှင့် နယ်စပ်ဒေသမှ လူငယ်များအတွက် STEM နှင့် Robotics ပညာရေးကို အဆင့်မြင့် နည်းပညာများဖြင့် ပေါင်းကူးပေးမည့် ပလက်ဖောင်း။",
+                "btn-ai-mentor": "✨ AI MENTOR", "btn-showcase": "ဖန်တီးမှုများ",
+                "showcase-h2": "Project Showcase", "showcase-p": "ကလေးငယ်များ၏ လက်တွေ့ဖန်တီးမှု မှတ်တိုင်များ",
+                "ai-h2": "✨ AI Mentor Hub", "ai-p": "သင့်မှာရှိတဲ့ ပစ္စည်းတွေနဲ့ ဘာတွေ တီထွင်လို့ရမလဲ? AI ကို မေးကြည့်လိုက်ပါ။",
+                "ai-input-label": "Command Center / Input Question", "ai-btn": "NEURAL PROCESSING",
+                "ai-loading": "Analyzing Neural Nodes...", "ai-idle": "အပေါ်က အကွက်မှာ စာရိုက်ပြီး Neural Processing စတင်လိုက်ပါ...",
+                "view-demo": "View Demo", "btn-close": "ပိတ်မည်", "footer-p": "နည်းပညာနှင့် တီထွင်ဖန်တီးမှုများမှတစ်ဆင့် ကလေးတိုင်းကို အားဖြည့်ပေးခြင်း",
+                "contact-p": "အစီအစဉ်နှင့် ပတ်သက်၍ အသေးစိတ် သိရှိလိုပါက အောက်ပါ လမ်းကြောင်းများမှတစ်ဆင့် ဆက်သွယ်နိုင်ပါသည်။"
+            },
+            en: {
+                "nav-brand": "SEIK KUU", "nav-history": "History", "nav-showcase": "Showcase", "nav-ai": "AI Mentor", "nav-contact": "Contact", "nav-join": "JOIN US",
+                "hero-badge": "Building Myanmar's Future Since 2018", "hero-h1-1": "FROM SHELTERS TO", "hero-h1-2": "FUTURE NOBELS",
+                "hero-p": "A high-tech platform bridging STEM and Robotics education for IDP children and youth across Myanmar zones.",
+                "btn-ai-mentor": "✨ AI MENTOR", "btn-showcase": "SHOWCASE",
+                "showcase-h2": "Project Showcase", "showcase-p": "Student milestones and practical creations",
+                "ai-h2": "✨ AI Mentor Hub", "ai-p": "What can you invent with your materials? Ask our AI.",
+                "ai-input-label": "Command Center / Input Question", "ai-btn": "NEURAL PROCESSING",
+                "ai-loading": "Synthesizing Insights...", "ai-idle": "Enter text above to start Neural Processing...",
+                "view-demo": "View Demo", "btn-close": "Close", "footer-p": "Empowering Every Child through Technology & Innovation"
+            }
+        };
+
+        const showcaseData = [
+            { id: 1, myTitle: "Smart Farm", enTitle: "Smart Farm", emoji: "🌱", myDesc: "IoT ရေလောင်းစနစ်။", enDesc: "IoT watering system.", enFull: "Uses soil moisture sensors and Arduino to automate irrigation.", myFull: "မြေဆီလွှာစိုစွတ်မှုကို Arduino sensor ဖြင့် တိုင်းတာပြီး အလိုအလျောက် ရေလောင်းသည့် စနစ်ဖြစ်ပါသည်။" },
+            { id: 2, myTitle: "Solar Tracker", enTitle: "Solar Tracker", emoji: "☀️", myDesc: "နေရောင်လိုက်စနစ်။", enDesc: "Sunlight tracker.", enFull: "LDR-based solar panel rotation for maximum efficiency.", myFull: "LDR sensor များကို သုံးပြီး နေရောင်ခြည် အကောင်းဆုံးရမည့်ဘက်သို့ လှည့်ပေးသည့် စနစ်ဖြစ်ပါသည်။" },
+            { id: 3, myTitle: "Avoid Bot", enTitle: "Obstacle Avoid Bot", emoji: "🤖", myDesc: "အတားအဆီးရှောင်စက်ရုပ်။", enDesc: "Collision-free bot.", enFull: "Ultrasonic sensor-based autonomous navigation.", myFull: "အတားအဆီးကို ရှာဖွေပြီး မတိုက်မိစေရန် ကိုယ်တိုင်လမ်းကြောင်းပြောင်းမောင်းနှင်သည့် စက်ရုပ်ဖြစ်ပါသည်။" },
+            { id: 4, myTitle: "Safe Hand", enTitle: "Touch-free Sanitizer", emoji: "🧼", myDesc: "ဟန်းဆေးထုတ်စနစ်။", enDesc: "Automatic dispenser.", enFull: "Infrared-based touchless sanitizer dispensing mechanism.", myFull: "လက်ရှိနေမှုကို Infrared ဖြင့် ရှာဖွေကာ လက်မထိဘဲ ဟန်းဆေးရည်ထုတ်ပေးသည့် စနစ်ဖြစ်ပါသည်။" }
+        ];
+
+        function changeLang(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if (translations[lang][key]) el.innerText = translations[lang][key];
+            });
+            document.getElementById('btn-lang-my').className = `px-2 py-1 rounded transition-colors ${lang === 'my' ? 'bg-cyan-600 text-white' : 'text-slate-400'}`;
+            document.getElementById('btn-lang-en').className = `px-2 py-1 rounded transition-colors ${lang === 'en' ? 'bg-cyan-600 text-white' : 'text-slate-400'}`;
+            renderShowcase();
+            document.getElementById('materialsInput').placeholder = lang === 'my' ? "ဥပမာ- ကတ်ထူပြား..." : "e.g. Cardboard...";
+        }
+
+        function renderShowcase() {
+            const grid = document.getElementById('showcase-grid');
+            if (!grid) return;
+            grid.innerHTML = showcaseData.map(p => `
+                <div class="glass-panel p-6 rounded-[2rem] border border-white/5 card-hover flex flex-col group shadow-lg">
+                    <div class="aspect-square bg-slate-900 rounded-3xl mb-6 flex items-center justify-center relative overflow-hidden group-hover:border-cyan-500/50 border border-transparent transition-all shadow-inner">
+                        <span class="text-6xl group-hover:scale-110 transition duration-500">${p.emoji}</span>
+                    </div>
+                    <h4 class="text-xl font-black text-white mb-2 uppercase tracking-tight">${currentLang === 'my' ? p.myTitle : p.enTitle}</h4>
+                    <p class="text-slate-400 text-xs mb-6 leading-relaxed flex-1">${currentLang === 'my' ? p.myDesc : p.enDesc}</p>
+                    <button onclick="openShowcase(${p.id})" class="mt-auto py-3 bg-white/5 border border-white/10 rounded-xl text-cyan-400 font-bold text-xs hover:bg-cyan-500 hover:text-slate-950 transition uppercase tracking-widest">${translations[currentLang]['view-demo']}</button>
+                </div>
+            `).join('');
+        }
+
+        function openShowcase(id) {
+            const p = showcaseData.find(x => x.id === id);
+            document.getElementById('showcaseTitle').innerText = currentLang === 'my' ? p.myTitle : p.enTitle;
+            document.getElementById('showcaseText').innerText = currentLang === 'my' ? p.myFull : p.enFull;
+            document.getElementById('showcaseOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeShowcase() {
+            document.getElementById('showcaseOverlay').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function clearChat() {
+            document.getElementById('conversationArea').innerHTML = `<div class="flex items-center gap-4 text-slate-500 font-mono text-sm"><span>&gt; SYSTEM_IDLE:</span><span data-key="ai-idle">${translations[currentLang]['ai-idle']}</span></div>`;
+        }
+
+        async function callGemini(prompt, systemInstruction = "") {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            let retries = 5;
+            let delay = 1000;
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            systemInstruction: { parts: [{ text: systemInstruction }] }
+                        })
+                    });
+                    if (!response.ok) throw new Error('API Error');
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text;
+                } catch (e) {
+                    if (i === retries - 1) throw e;
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        function setTemplate(type) {
+            const input = document.getElementById('materialsInput');
+            if (type === 'cardboard') input.value = currentLang === 'my' ? "ကတ်ထူပြား၊ မော်တာ၊ ရေဘူးခွံ" : "Cardboard, DC Motor, Plastic Bottle";
+            if (type === 'career') input.value = currentLang === 'my' ? "ငါက သင်္ချာတော်တယ်၊ စက်ရုပ်တွေ စိတ်ဝင်စားတယ်" : "I am good at math and I love robotics";
+        }
+
+        function formatAIResponse(text) {
+            const lines = text.split('\n');
+            let html = `<div class="space-y-6">`;
+            let sectionContent = "";
+            lines.forEach(line => {
+                const cleanLine = line.trim();
+                if (cleanLine.startsWith('Title:') || cleanLine.startsWith('ခေါင်းစဉ်:')) {
+                    html += `<h3 class="text-2xl font-black text-orange-400 uppercase tracking-tighter border-b border-orange-500/20 pb-2">${cleanLine.split(':')[1]}</h3>`;
+                } else if (cleanLine.startsWith('Materials:') || cleanLine.startsWith('လိုအပ်သည့်ပစ္စည်းများ:')) {
+                    html += `<div class="result-card"><h4 class="text-xs font-black text-cyan-400 uppercase mb-2">Required Materials</h4><p class="text-slate-300 text-sm">${cleanLine.split(':')[1]}</p></div>`;
+                } else if (cleanLine.match(/^\d+\./)) {
+                    html += `<div class="flex items-start gap-3"><span class="bg-cyan-500/10 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded border border-cyan-500/20">STEP</span><p class="text-slate-200 text-sm">${cleanLine}</p></div>`;
+                } else if (cleanLine !== "") {
+                    html += `<p class="text-slate-400 text-xs leading-relaxed italic">${cleanLine}</p>`;
+                }
+            });
+            html += `</div>`;
+            return html;
+        }
+
+        async function askAIMuse() {
+            const inputField = document.getElementById('materialsInput');
+            const output = document.getElementById('conversationArea');
+            const overlay = document.getElementById('loadingOverlay');
+            const btn = document.getElementById('museBtn');
+            const text = inputField.value.trim();
+            if (!text) return;
+            overlay.classList.remove('hidden');
+            btn.disabled = true;
+            const systemPrompt = `You are a STEM mentor for Myanmar kids. Provide detailed DIY projects or Career roadmaps.
+            Response Language: ${currentLang === 'my' ? 'Burmese' : 'English'}.
+            Use this structure:
+            Title: [Name]
+            Materials: [List]
+            Instructions: [Steps]
+            Explanation: [Brief Science]`;
+            try {
+                const result = await callGemini(text, systemPrompt);
+                output.innerHTML = formatAIResponse(result);
+                inputField.value = '';
+            } catch (err) {
+                output.innerHTML = `<div class="text-red-400">Connection Error.</div>`;
+            } finally {
+                overlay.classList.add('hidden');
+                btn.disabled = false;
+            }
+        }
+
+        window.onload = function() {
+            changeLang('my');
+            const ctxGrowth = document.getElementById('growthChart')?.getContext('2d');
+            if (ctxGrowth) {
+                new Chart(ctxGrowth, {
+                    type: 'line',
+                    data: {
+                        labels: ['2019', '2020', '2021', '2022', '2023', '2024'],
+                        datasets: [{
+                            label: 'Students', data: [45, 130, 220, 360, 480, 520],
+                            borderColor: '#22d3ee', backgroundColor: 'rgba(34, 211, 238, 0.1)',
+                            fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }, x: { grid: { display: false }, ticks: { color: '#94a3b8' } } } }
+                });
+            }
+            const ctxSkill = document.getElementById('skillChart')?.getContext('2d');
+            if (ctxSkill) {
+                new Chart(ctxSkill, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Logic', 'Circuit', 'Build', 'Invent', 'Team'],
+                        datasets: [{
+                            label: 'Level', data: [95, 85, 75, 90, 85],
+                            backgroundColor: 'rgba(251, 146, 60, 0.2)', borderColor: '#fb923c', borderWidth: 3
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { r: { angleLines: { color: 'rgba(255,255,255,0.08)' }, grid: { color: 'rgba(255,255,255,0.08)' }, pointLabels: { color: '#cbd5e1' }, ticks: { display: false } } } }
+                });
+            }
+        };
+    </script>
+</body>
+</html>
